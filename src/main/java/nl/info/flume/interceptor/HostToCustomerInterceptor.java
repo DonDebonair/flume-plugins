@@ -71,7 +71,7 @@ public class HostToCustomerInterceptor implements Interceptor {
             } else {
                 shortHost = host;
             }
-            customer = hostToCustomerMap.get(shortHost);
+            customer = hostToCustomerMap.get(shortHost.toLowerCase());
         }
 
         if(customer != null) {
@@ -118,7 +118,7 @@ public class HostToCustomerInterceptor implements Interceptor {
                 customer = m.group(1);
                 hosts = m.group(2).trim().split("\\s");
                 for(String host : hosts) {
-                    host = host.trim();
+                    host = host.trim().toLowerCase();
                     if(host.contains(".")) {
                         host = host.substring(0, host.indexOf("."));
                     }

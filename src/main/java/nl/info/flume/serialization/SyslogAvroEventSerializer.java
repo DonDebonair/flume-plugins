@@ -6,10 +6,17 @@ package nl.info.flume.serialization;
  * @author daan.debie
  */
 import com.google.common.base.Charsets;
+
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -18,6 +25,7 @@ import org.apache.avro.Schema;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import nl.info.flume.serialization.SyslogAvroEventSerializer.SyslogEvent;
+import static nl.info.flume.serialization.SyslogAvroEventSerializer.Constants.*;
 import org.apache.flume.serialization.AbstractAvroEventSerializer;
 import org.apache.flume.serialization.EventSerializer;
 import org.joda.time.DateTime;
@@ -39,6 +47,12 @@ import org.joda.time.format.DateTimeFormatter;
 public class SyslogAvroEventSerializer
         extends AbstractAvroEventSerializer<SyslogEvent> {
 
+    private final String path;
+    private final String customerHeader;
+    private final String hostHeader;
+    private static final String UNKNOWN_CUSTOMER = "UNKNOWN";
+    private Map<String, String> hostToCustomerMap;
+
     private static final DateTimeFormatter dateFmt1 =
             DateTimeFormat.forPattern("MMM dd HH:mm:ss").withZoneUTC();
     private static final DateTimeFormatter dateFmt2 =
@@ -56,8 +70,24 @@ public class SyslogAvroEventSerializer
 
     private final OutputStream out;
 
-    public SyslogAvroEventSerializer(OutputStream out) throws IOException {
+    public SyslogAvroEventSerializer(OutputStream out, String path, String customerHeader, String hostHeader) throws IOException {
         this.out = out;
+        this.path = path;
+        this.customerHeader = customerHeader;
+        this.hostHeader = hostHeader;
+    }
+
+    @Override
+    public void configure(Context context) {
+        super.configure(context);
+        File customerHostsFile = new File(path);
+        try {
+            hostToCustomerMap = buildCustomerToHostMapFromFile(customerHostsFile);
+        } catch (FileNotFoundException e) {
+            log.warn("Could not find file: {}", path);
+        } catch (IOException e) {
+            log.warn("File IO error in: {}", path);
+        }
     }
 
     @Override
@@ -74,6 +104,7 @@ public class SyslogAvroEventSerializer
     @Override
     protected SyslogEvent convert(Event event) {
         SyslogEvent sle = new SyslogEvent();
+        boolean expectedFormat = false;
 
         // Stringify body so it's easy to parse.
         // This is a pretty inefficient way to do it.
@@ -91,18 +122,30 @@ public class SyslogAvroEventSerializer
             sle.setTimestamp(ts);
             sle.setDatetime(new DateTime(ts).toString("yyyy-MM-dd HH:mm:ss"));
             seek += 15 + 1; // space after timestamp
+            expectedFormat = true;
         }
 
         // parse the hostname
         int nextSpace = logline.indexOf(' ', seek);
-        if (nextSpace > -1) {
-            String hostname = logline.substring(seek, nextSpace);
+        String hostname;
+        if (nextSpace > -1 && expectedFormat) {
+            hostname = logline.substring(seek, nextSpace);
             sle.setHostname(hostname);
-            if(headers.containsKey("host")) {
-                headers.put("host", hostname);
-            }
+            headers.put(hostHeader, hostname);
             seek = nextSpace + 1;
+        } else {
+            hostname = headers.get(hostHeader);
         }
+
+        // Get customer
+        headers.put(customerHeader, UNKNOWN_CUSTOMER);
+        if(hostname != null) {
+            String customer = hostToCustomerMap.get(hostname.toLowerCase());
+            if(customer != null) {
+                headers.put(customerHeader, customer);
+            }
+        }
+
 
         // everything else is the message
         String actualMessage = logline.substring(seek);
@@ -168,13 +211,52 @@ public class SyslogAvroEventSerializer
         return date.getMillis();
     }
 
+    public static Map<String, String> buildCustomerToHostMapFromFile(File file) throws FileNotFoundException, IOException {
+
+        Map<String, String> hostToCustomerMap = new HashMap<String, String>();
+        String line;
+        String customer;
+        String[] hosts;
+        Pattern pattern = Pattern.compile("(?i)^(.*):(.*)$");
+
+        FileReader fileReader = new FileReader(file);
+
+        BufferedReader bufferedReader = new BufferedReader(fileReader);
+        line = bufferedReader.readLine();
+        while(line != null) {
+            Matcher m = pattern.matcher(line);
+            if (m.matches()) {
+                customer = m.group(1);
+                hosts = m.group(2).trim().split("\\s");
+                for(String host : hosts) {
+                    host = host.trim().toLowerCase();
+                    if(host.contains(".")) {
+                        host = host.substring(0, host.indexOf("."));
+                    }
+                    hostToCustomerMap.put(host, customer);
+                }
+            }
+            line = bufferedReader.readLine();
+        }
+        bufferedReader.close();
+
+        return hostToCustomerMap;
+    }
+
     public static class Builder implements EventSerializer.Builder {
+
+        private String customerHeader;
+        private String hostHeader;
+        private String path;
 
         @Override
         public EventSerializer build(Context context, OutputStream out) {
+            path = context.getString(PATH, PATH_DEFAULT);
+            customerHeader = context.getString(CUSTOMER_HEADER, CUSTOMER_HEADER_DEFAULT);
+            hostHeader = context.getString(HOST_HEADER, HOST_HEADER_DEFAULT);
             SyslogAvroEventSerializer writer = null;
             try {
-                writer = new SyslogAvroEventSerializer(out);
+                writer = new SyslogAvroEventSerializer(out, path, customerHeader, hostHeader);
                 writer.configure(context);
             } catch (IOException e) {
                 log.error("Unable to parse schema file. Exception follows.", e);
@@ -206,5 +288,17 @@ public class SyslogAvroEventSerializer
             builder.append(" Message: \"").append(message).append("\" }");
             return builder.toString();
         }
+    }
+
+    public static class Constants {
+
+        public static final String PATH = "path";
+        public static final String PATH_DEFAULT = "/etc/flume-ng/conf/customerhosts.conf";
+
+        public static final String CUSTOMER_HEADER = "customerHeader";
+        public static final String CUSTOMER_HEADER_DEFAULT = "customer";
+
+        public static final String HOST_HEADER = "hostHeader";
+        public static final String HOST_HEADER_DEFAULT = "host";
     }
 }

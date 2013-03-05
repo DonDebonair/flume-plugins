@@ -1,2 +1,4 @@
 nietinfo:logmft02p bla blie.test.nl bloe
+syslogthingy:fac01
 info:localhost dus och ja
+nogeensyslogthingy:wtrip01
