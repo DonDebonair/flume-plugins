@@ -90,9 +90,10 @@ public class TestApacheAvroEventSerializer {
             String uri = record.get("uri").toString();
             Integer statuscode = (Integer) record.get("statuscode");
             String original = record.get("original").toString();
+            String connectionstatus = record.get("connectionstatus").toString();
 
             Assert.assertEquals("Ip should be 80.79.194.3", "80.79.194.3", ip);
-            System.out.println("IP " + ip + " requested: " + uri + " with status code " + statuscode);
+            System.out.println("IP " + ip + " requested: " + uri + " with status code " + statuscode + " and connectionstatus: " + connectionstatus);
             System.out.println("Original logline: " + original);
             numEvents++;
         }

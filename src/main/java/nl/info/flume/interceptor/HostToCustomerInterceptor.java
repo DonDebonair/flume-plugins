@@ -63,6 +63,7 @@ public class HostToCustomerInterceptor implements Interceptor {
         Map<String, String> headers = event.getHeaders();
         if(!headers.containsKey(hostHeader)) {
             // log.warn("No host found in header!");
+            headers.put(customerHeader, UNKNOWN_CUSTOMER);
             return event;
         } else {
             String host = headers.get(hostHeader);
