@@ -112,6 +112,12 @@ public class SyslogAvroEventSerializer
         Map<String, String> headers = event.getHeaders();
         sle.setOriginal(logline);
 
+        // This could be an unknown format
+        if(logline.length() < 15) {
+            sle.setHeaders(headers);
+            return sle;
+        }
+
         // parser read pointer
         int seek = 0;
 

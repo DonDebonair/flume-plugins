@@ -60,6 +60,10 @@ public class TestSyslogAvroEventSerializer {
         e = EventBuilder.withBody("En zoals verwacht: dit werkt eigenlijk ook wel", Charsets.UTF_8);
         list.add(e);
 
+        // Add empty event
+        e = EventBuilder.withBody("", Charsets.UTF_8);
+        list.add(e);
+
         return list;
     }
 
@@ -108,7 +112,7 @@ public class TestSyslogAvroEventSerializer {
         }
 
         fileReader.close();
-        Assert.assertEquals("Should have found a total of 5 events", 5, numEvents);
+        Assert.assertEquals("Should have found a total of 6 events", 6, numEvents);
 
         FileUtils.forceDelete(testFile);
     }

@@ -47,6 +47,9 @@ public class TestJavaAvroEventSerializer {
         e = EventBuilder.withBody("[#|2013-03-01T11:25:12.944+0100|WARNING|sun-appserver2.1|nl.info.bva.model.service.impl.UserServiceImpl|_ThreadID=25;_ThreadName=TP-Processor2;_RequestID=66ca112d-55d0-4ba6-9503-0c70d5f4c606;|Invocation of method nl.info.bva.model.service.impl.UserServiceImpl.findUsersByDetails({Steijn-koopman,<null>,<null>,<null>,<null>,<null>,<null>,<null>,<null>,<null>}) exceeded threshold! Duration was 536 msec and the threshold was set at 500 msec.|#]", Charsets.UTF_8);
         list.add(e);
 
+        e = EventBuilder.withBody("", Charsets.UTF_8);
+        list.add(e);
+
         return list;
     }
 
@@ -93,7 +96,7 @@ public class TestJavaAvroEventSerializer {
         }
 
         fileReader.close();
-        Assert.assertEquals("Should have found a total of 3 events", 3, numEvents);
+        Assert.assertEquals("Should have found a total of 4 events", 4, numEvents);
 
         FileUtils.forceDelete(testFile);
     }

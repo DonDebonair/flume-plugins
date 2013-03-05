@@ -126,7 +126,13 @@ public class JavaLogAvroEventSerializer extends AbstractAvroEventSerializer<Java
 
         // everything else is the message, up to the last |#]
         nextMarker = logline.indexOf('|', seek);
-        String actualMessage = logline.substring(seek, nextMarker);
+        String actualMessage;
+        if(nextMarker > -1) {
+            actualMessage = logline.substring(seek, nextMarker);
+        } else {
+            actualMessage = logline.substring(seek);
+        }
+
         jve.setMessage(actualMessage);
 
         // log.debug("Serialized event as: {}", jve);
