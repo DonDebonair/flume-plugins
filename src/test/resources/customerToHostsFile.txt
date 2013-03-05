@@ -1,2 +1,2 @@
-nietinfo:logmft02p bla blie bloe
+nietinfo:logmft02p bla blie.test.nl bloe
 info:localhost dus och ja

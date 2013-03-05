@@ -112,9 +112,13 @@ public class HostToCustomerInterceptor implements Interceptor {
             Matcher m = pattern.matcher(line);
             if (m.matches()) {
                 customer = m.group(1);
-                hosts = m.group(2).split("\\s");
+                hosts = m.group(2).trim().split("\\s");
                 for(String host : hosts) {
-                    hostToCustomerMap.put(host.trim(), customer);
+                    host = host.trim();
+                    if(host.contains(".")) {
+                        host = host.substring(0, host.indexOf("."));
+                    }
+                    hostToCustomerMap.put(host, customer);
                 }
             }
             line = bufferedReader.readLine();
