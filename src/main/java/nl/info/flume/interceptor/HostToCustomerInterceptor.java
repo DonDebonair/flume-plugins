@@ -62,7 +62,7 @@ public class HostToCustomerInterceptor implements Interceptor {
         String shortHost;
         Map<String, String> headers = event.getHeaders();
         if(!headers.containsKey(hostHeader)) {
-            log.warn("No host found in header!");
+            // log.warn("No host found in header!");
             return event;
         } else {
             String host = headers.get(hostHeader);
