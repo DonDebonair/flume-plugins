@@ -66,7 +66,11 @@ public class HostToCustomerInterceptor implements Interceptor {
             return event;
         } else {
             String host = headers.get(hostHeader);
-            shortHost = host.substring(0, host.indexOf("."));
+            if(host.contains(".")) {
+                shortHost = host.substring(0, host.indexOf("."));
+            } else {
+                shortHost = host;
+            }
             customer = hostToCustomerMap.get(shortHost);
         }
 
