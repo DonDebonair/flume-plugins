@@ -59,7 +59,7 @@ public class SyslogAvroEventSerializer
             DateTimeFormat.forPattern("MMM  d HH:mm:ss").withZoneUTC();
 
     private static final Schema SCHEMA = new Schema.Parser().parse("" +
-            "{ \"type\": \"record\", \"name\": \"SyslogEvent\", \"namespace\": \"org.apache.flume\", \"fields\": [" +
+            "{ \"type\": \"record\", \"name\": \"SyslogEvent\", \"namespace\": \"nl.info.flume\", \"fields\": [" +
             " {\"name\": \"headers\", \"type\": { \"type\": \"map\", \"values\": \"string\" } }, " +
             " { \"name\": \"original\",  \"type\": \"string\" }," +
             " { \"name\": \"timestamp\", \"type\": \"long\" }," +

@@ -30,7 +30,7 @@ public class JavaLogAvroEventSerializer extends AbstractAvroEventSerializer<Java
     private static final DateTimeFormatter dateFmt = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
 
     private static final Schema SCHEMA = new Schema.Parser().parse("" +
-            "{ \"type\": \"record\", \"name\": \"SyslogEvent\", \"namespace\": \"org.apache.flume.test\", \"fields\": [" +
+            "{ \"type\": \"record\", \"name\": \"JavaEvent\", \"namespace\": \"nl.info.flume\", \"fields\": [" +
             " {\"name\": \"headers\", \"type\": { \"type\": \"map\", \"values\": \"string\" } }, " +
             " { \"name\": \"original\",  \"type\": \"string\" }," +
             " { \"name\": \"timestamp\", \"type\": \"long\" }," +
