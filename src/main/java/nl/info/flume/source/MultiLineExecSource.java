@@ -17,18 +17,9 @@
  * under the License.
  */
 
-package org.apache.flume.source;
+package nl.info.flume.source;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-
+import com.google.common.base.Preconditions;
 import org.apache.flume.Channel;
 import org.apache.flume.Context;
 import org.apache.flume.CounterGroup;
@@ -38,11 +29,20 @@ import org.apache.flume.Source;
 import org.apache.flume.channel.ChannelProcessor;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.event.EventBuilder;
+import org.apache.flume.source.AbstractSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Preconditions;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 /**
  * <p>
@@ -134,11 +134,11 @@ import java.nio.charset.Charset;
  * TODO
  * </p>
  */
-public class ExecSource extends AbstractSource implements EventDrivenSource,
+public class MultiLineExecSource extends AbstractSource implements EventDrivenSource,
 		  Configurable {
 
 	private static final Logger logger = LoggerFactory
-			  .getLogger(ExecSource.class);
+			  .getLogger(MultiLineExecSource.class);
 
 
 	private String command;
@@ -215,20 +215,20 @@ public class ExecSource extends AbstractSource implements EventDrivenSource,
 		Preconditions.checkState(command != null,
 				  "The parameter command must be specified");
 
-		restartThrottle = context.getLong(ExecSourceConfigurationConstants.CONFIG_RESTART_THROTTLE,
-				  ExecSourceConfigurationConstants.DEFAULT_RESTART_THROTTLE);
+		restartThrottle = context.getLong(MultiLineExecSourceConfigurationConstants.CONFIG_RESTART_THROTTLE,
+				  MultiLineExecSourceConfigurationConstants.DEFAULT_RESTART_THROTTLE);
 
-		restart = context.getBoolean(ExecSourceConfigurationConstants.CONFIG_RESTART,
-				  ExecSourceConfigurationConstants.DEFAULT_RESTART);
+		restart = context.getBoolean(MultiLineExecSourceConfigurationConstants.CONFIG_RESTART,
+				  MultiLineExecSourceConfigurationConstants.DEFAULT_RESTART);
 
-		logStderr = context.getBoolean(ExecSourceConfigurationConstants.CONFIG_LOG_STDERR,
-				  ExecSourceConfigurationConstants.DEFAULT_LOG_STDERR);
+		logStderr = context.getBoolean(MultiLineExecSourceConfigurationConstants.CONFIG_LOG_STDERR,
+				  MultiLineExecSourceConfigurationConstants.DEFAULT_LOG_STDERR);
 
-		bufferCount = context.getInteger(ExecSourceConfigurationConstants.CONFIG_BATCH_SIZE,
-				  ExecSourceConfigurationConstants.DEFAULT_BATCH_SIZE);
+		bufferCount = context.getInteger(MultiLineExecSourceConfigurationConstants.CONFIG_BATCH_SIZE,
+				  MultiLineExecSourceConfigurationConstants.DEFAULT_BATCH_SIZE);
 
-		charset = Charset.forName(context.getString(ExecSourceConfigurationConstants.CHARSET,
-				  ExecSourceConfigurationConstants.DEFAULT_CHARSET));
+		charset = Charset.forName(context.getString(MultiLineExecSourceConfigurationConstants.CHARSET,
+				  MultiLineExecSourceConfigurationConstants.DEFAULT_CHARSET));
 	}
 
 	private static class ExecRunnable implements Runnable {

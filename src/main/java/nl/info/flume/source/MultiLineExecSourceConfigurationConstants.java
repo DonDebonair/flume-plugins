@@ -16,11 +16,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.flume.source;
 
-import java.nio.charset.Charset;
+package nl.info.flume.source;
 
-public class ExecSourceConfigurationConstants {
+public class MultiLineExecSourceConfigurationConstants {
 
 	/**
 	 * Should the exec'ed command restarted if it dies: : default false
