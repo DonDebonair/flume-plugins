@@ -20,12 +20,11 @@
 package nl.info.flume.source;
 
 import com.google.common.base.Preconditions;
-import org.apache.flume.Channel;
+import org.apache.commons.lang.StringUtils;
 import org.apache.flume.Context;
 import org.apache.flume.CounterGroup;
 import org.apache.flume.Event;
 import org.apache.flume.EventDrivenSource;
-import org.apache.flume.Source;
 import org.apache.flume.channel.ChannelProcessor;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.event.EventBuilder;
@@ -38,15 +37,28 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import static java.lang.String.format;
+import static nl.info.flume.source.MultiLineExecSourceConfigurationConstants.CHARSET;
+import static nl.info.flume.source.MultiLineExecSourceConfigurationConstants.CONFIG_BATCH_SIZE;
+import static nl.info.flume.source.MultiLineExecSourceConfigurationConstants.CONFIG_LOG_STDERR;
+import static nl.info.flume.source.MultiLineExecSourceConfigurationConstants.CONFIG_RESTART;
+import static nl.info.flume.source.MultiLineExecSourceConfigurationConstants.CONFIG_RESTART_THROTTLE;
+import static nl.info.flume.source.MultiLineExecSourceConfigurationConstants.DEFAULT_BATCH_SIZE;
+import static nl.info.flume.source.MultiLineExecSourceConfigurationConstants.DEFAULT_CHARSET;
+import static nl.info.flume.source.MultiLineExecSourceConfigurationConstants.DEFAULT_LOG_STDERR;
+import static nl.info.flume.source.MultiLineExecSourceConfigurationConstants.DEFAULT_RESTART;
+import static nl.info.flume.source.MultiLineExecSourceConfigurationConstants.DEFAULT_RESTART_THROTTLE;
+
 /**
  * <p>
- * A {@link Source} implementation that executes a Unix process and turns each
+ * A {@link org.apache.flume.Source} implementation that executes a Unix process and turns each
  * line of text into an event.
  * </p>
  * <p>
@@ -73,7 +85,7 @@ import java.util.concurrent.TimeUnit;
  * <p>
  * The problem with <tt>ExecSource</tt> and other asynchronous sources is that
  * the source can not guarantee that if there is a failure to put the event into
- * the {@link Channel} the client knows about it. As a for instance, one of the
+ * the {@link org.apache.flume.Channel} the client knows about it. As a for instance, one of the
  * most commonly requested features is the <tt>tail -F [file]</tt>-like use case
  * where an application writes to a log file on disk and Flume tails the file,
  * sending each line as an event. While this is possible, there's an obvious
@@ -99,6 +111,12 @@ import java.util.concurrent.TimeUnit;
  * <tr>
  * <td><tt>command</tt></td>
  * <td>The command to execute</td>
+ * <td>String</td>
+ * <td>none (required)</td>
+ * </tr>
+ * <tr>
+ * <td><tt>line.terminator</tt></td>
+ * <td>The String that designates the end of the event</td>
  * <td>String</td>
  * <td>none (required)</td>
  * </tr>
@@ -134,14 +152,12 @@ import java.util.concurrent.TimeUnit;
  * TODO
  * </p>
  */
-public class MultiLineExecSource extends AbstractSource implements EventDrivenSource,
-		  Configurable {
+public class MultiLineExecSource extends AbstractSource implements EventDrivenSource, Configurable {
 
-	private static final Logger logger = LoggerFactory
-			  .getLogger(MultiLineExecSource.class);
-
+	private static final Logger logger = LoggerFactory.getLogger(nl.info.flume.source.MultiLineExecSource.class);
 
 	private String command;
+	private String lineTerminator;
 	private CounterGroup counterGroup;
 	private ExecutorService executor;
 	private Future<?> runnerFuture;
@@ -154,12 +170,12 @@ public class MultiLineExecSource extends AbstractSource implements EventDrivenSo
 
 	@Override
 	public void start() {
-		logger.info("Exec source starting with command:{}", command);
+		logger.info("Multi Line Exec source starting with command: {}, line terminator: {}", command, lineTerminator);
 
 		executor = Executors.newSingleThreadExecutor();
 		counterGroup = new CounterGroup();
 
-		runner = new ExecRunnable(command, getChannelProcessor(), counterGroup,
+		runner = new ExecRunnable(command, lineTerminator, getChannelProcessor(), counterGroup,
 				  restart, restartThrottle, logStderr, bufferCount, charset);
 
 		// FIXME: Use a callback-like executor / future to signal us upon failure.
@@ -172,71 +188,60 @@ public class MultiLineExecSource extends AbstractSource implements EventDrivenSo
      */
 		super.start();
 
-		logger.debug("Exec source started");
+		logger.debug("Multi Line Exec source started");
 	}
 
 	@Override
 	public void stop() {
-		logger.info("Stopping exec source with command:{}", command);
+		logger.info("Stopping Multi Line exec source with command: {}, line terminator: {}", command, lineTerminator);
 
-		if(runner != null) {
+		if (runner != null) {
 			runner.setRestart(false);
 			runner.kill();
 		}
 		if (runnerFuture != null) {
-			logger.debug("Stopping exec runner");
+			logger.debug("Stopping Multi Line exec runner");
 			runnerFuture.cancel(true);
-			logger.debug("Exec runner stopped");
+			logger.debug("Multi Line Exec runner stopped");
 		}
 
 		executor.shutdown();
 
 		while (!executor.isTerminated()) {
-			logger.debug("Waiting for exec executor service to stop");
+			logger.debug("Waiting for Multi Line exec executor service to stop");
 			try {
 				executor.awaitTermination(500, TimeUnit.MILLISECONDS);
 			} catch (InterruptedException e) {
-				logger.debug("Interrupted while waiting for exec executor service "
-						  + "to stop. Just exiting.");
+				logger.debug("Interrupted while waiting for Multi Line exec executor service to stop. Just exiting.");
 				Thread.currentThread().interrupt();
 			}
 		}
 
 		super.stop();
 
-		logger.debug("Exec source with command:{} stopped. Metrics:{}", command,
-				  counterGroup);
+		logger.debug(format("Multi Line Exec source with command: %s, line terminator: %s stopped. Metrics: %s", command, lineTerminator, counterGroup));
 	}
 
 	@Override
 	public void configure(Context context) {
 		command = context.getString("command");
+		lineTerminator = context.getString("line.terminator");
 
-		Preconditions.checkState(command != null,
-				  "The parameter command must be specified");
+		Preconditions.checkState(command != null, "The parameter command must be specified");
+		Preconditions.checkState(lineTerminator != null, "The parameter line.terminator must be specified");
 
-		restartThrottle = context.getLong(MultiLineExecSourceConfigurationConstants.CONFIG_RESTART_THROTTLE,
-				  MultiLineExecSourceConfigurationConstants.DEFAULT_RESTART_THROTTLE);
-
-		restart = context.getBoolean(MultiLineExecSourceConfigurationConstants.CONFIG_RESTART,
-				  MultiLineExecSourceConfigurationConstants.DEFAULT_RESTART);
-
-		logStderr = context.getBoolean(MultiLineExecSourceConfigurationConstants.CONFIG_LOG_STDERR,
-				  MultiLineExecSourceConfigurationConstants.DEFAULT_LOG_STDERR);
-
-		bufferCount = context.getInteger(MultiLineExecSourceConfigurationConstants.CONFIG_BATCH_SIZE,
-				  MultiLineExecSourceConfigurationConstants.DEFAULT_BATCH_SIZE);
-
-		charset = Charset.forName(context.getString(MultiLineExecSourceConfigurationConstants.CHARSET,
-				  MultiLineExecSourceConfigurationConstants.DEFAULT_CHARSET));
+		restartThrottle = context.getLong(CONFIG_RESTART_THROTTLE, DEFAULT_RESTART_THROTTLE);
+		restart = context.getBoolean(CONFIG_RESTART, DEFAULT_RESTART);
+		logStderr = context.getBoolean(CONFIG_LOG_STDERR, DEFAULT_LOG_STDERR);
+		bufferCount = context.getInteger(CONFIG_BATCH_SIZE, DEFAULT_BATCH_SIZE);
+		charset = Charset.forName(context.getString(CHARSET, DEFAULT_CHARSET));
 	}
 
-	private static class ExecRunnable implements Runnable {
+	protected static class ExecRunnable implements Runnable {
 
-		public ExecRunnable(String command, ChannelProcessor channelProcessor,
-		                    CounterGroup counterGroup, boolean restart, long restartThrottle,
-		                    boolean logStderr, int bufferCount, Charset charset) {
+		public ExecRunnable(String command, String lineTerminator, ChannelProcessor channelProcessor, CounterGroup counterGroup, boolean restart, long restartThrottle, boolean logStderr, int bufferCount, Charset charset) {
 			this.command = command;
+			this.lineTerminator = lineTerminator;
 			this.channelProcessor = channelProcessor;
 			this.counterGroup = counterGroup;
 			this.restartThrottle = restartThrottle;
@@ -247,6 +252,7 @@ public class MultiLineExecSource extends AbstractSource implements EventDrivenSo
 		}
 
 		private String command;
+		private String lineTerminator;
 		private ChannelProcessor channelProcessor;
 		private CounterGroup counterGroup;
 		private volatile boolean restart;
@@ -259,37 +265,49 @@ public class MultiLineExecSource extends AbstractSource implements EventDrivenSo
 		@Override
 		public void run() {
 			do {
-				String exitCode = "unknown";
+				String exitCode;
 				BufferedReader reader = null;
 				try {
-					String[] commandArgs = command.split("\\s+");
-					process = new ProcessBuilder(commandArgs).start();
-					reader = new BufferedReader(
-							  new InputStreamReader(process.getInputStream(), charset));
+					process = startedCommandProcessBuilder(Arrays.asList(command.split("\\s+")));
+					reader = getBufferedReader();
 
 					// StderrLogger dies as soon as the input stream is invalid
-					StderrReader stderrReader = new StderrReader(new BufferedReader(
-							  new InputStreamReader(process.getErrorStream(), charset)), logStderr);
+					StderrReader stderrReader = getStderrReader();
 					stderrReader.setName("StderrReader-[" + command + "]");
 					stderrReader.setDaemon(true);
 					stderrReader.start();
 
-					String line = null;
+					String line;
+					boolean skipNextEmptyLine = false;
 					List<Event> eventList = new ArrayList<Event>();
+					List<String> buffer = new ArrayList<String>();
 					while ((line = reader.readLine()) != null) {
-						counterGroup.incrementAndGet("exec.lines.read");
-						eventList.add(EventBuilder.withBody(line.getBytes(charset)));
-						if(eventList.size() >= bufferCount) {
+						if (line.isEmpty() && skipNextEmptyLine) {
+							skipNextEmptyLine = false;
+							continue;
+						}
+
+						buffer.add(line);
+
+						if (line.endsWith(lineTerminator)) {
+							counterGroup.incrementAndGet("multi.line.exec.events.read");
+							String eventBody = StringUtils.join(buffer.toArray(), "\n");
+							buffer.clear();
+							eventList.add(EventBuilder.withBody(eventBody.getBytes(charset)));
+							skipNextEmptyLine = true;
+						}
+
+						if (eventList.size() >= bufferCount) {
 							channelProcessor.processEventBatch(eventList);
 							eventList.clear();
 						}
 					}
-					if(!eventList.isEmpty()) {
+					if (!eventList.isEmpty()) {
 						channelProcessor.processEventBatch(eventList);
 					}
 				} catch (Exception e) {
 					logger.error("Failed while running command: " + command, e);
-					if(e instanceof InterruptedException) {
+					if (e instanceof InterruptedException) {
 						Thread.currentThread().interrupt();
 					}
 				} finally {
@@ -297,14 +315,13 @@ public class MultiLineExecSource extends AbstractSource implements EventDrivenSo
 						try {
 							reader.close();
 						} catch (IOException ex) {
-							logger.error("Failed to close reader for exec source", ex);
+							logger.error("Failed to close reader for Multi Line exec source", ex);
 						}
 					}
 					exitCode = String.valueOf(kill());
 				}
-				if(restart) {
-					logger.info("Restarting in {}ms, exit code {}", restartThrottle,
-							  exitCode);
+				if (restart) {
+					logger.info("Restarting in {}ms, exit code {}", restartThrottle, exitCode);
 					try {
 						Thread.sleep(restartThrottle);
 					} catch (InterruptedException e) {
@@ -313,10 +330,23 @@ public class MultiLineExecSource extends AbstractSource implements EventDrivenSo
 				} else {
 					logger.info("Command [" + command + "] exited with " + exitCode);
 				}
-			} while(restart);
+			} while (restart);
 		}
+
+		protected StderrReader getStderrReader() {
+			return new StderrReader(new BufferedReader(new InputStreamReader(process.getErrorStream(), charset)), logStderr);
+		}
+
+		protected BufferedReader getBufferedReader() {
+			return new BufferedReader(new InputStreamReader(process.getInputStream(), charset));
+		}
+
+		protected Process startedCommandProcessBuilder(List<String> commandArgs) throws IOException {
+			return new ProcessBuilder(commandArgs).start();
+		}
+
 		public int kill() {
-			if(process != null) {
+			if (process != null) {
 				synchronized (process) {
 					process.destroy();
 					try {
@@ -329,24 +359,28 @@ public class MultiLineExecSource extends AbstractSource implements EventDrivenSo
 			}
 			return Integer.MIN_VALUE / 2;
 		}
+
 		public void setRestart(boolean restart) {
 			this.restart = restart;
 		}
 	}
-	private static class StderrReader extends Thread {
+
+	protected static class StderrReader extends Thread {
 		private BufferedReader input;
 		private boolean logStderr;
+
 		protected StderrReader(BufferedReader input, boolean logStderr) {
 			this.input = input;
 			this.logStderr = logStderr;
 		}
+
 		@Override
 		public void run() {
 			try {
 				int i = 0;
-				String line = null;
-				while((line = input.readLine()) != null) {
-					if(logStderr) {
+				String line;
+				while ((line = input.readLine()) != null) {
+					if (logStderr) {
 						// There is no need to read 'line' with a charset
 						// as we do not to propagate it.
 						// It is in UTF-16 and would be printed in UTF-8 format.
@@ -357,11 +391,11 @@ public class MultiLineExecSource extends AbstractSource implements EventDrivenSo
 				logger.info("StderrLogger exiting", e);
 			} finally {
 				try {
-					if(input != null) {
+					if (input != null) {
 						input.close();
 					}
 				} catch (IOException ex) {
-					logger.error("Failed to close stderr reader for exec source", ex);
+					logger.error("Failed to close stderr reader for Multi Line exec source", ex);
 				}
 			}
 		}

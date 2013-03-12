@@ -16,38 +16,37 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 package nl.info.flume.source;
 
 public class MultiLineExecSourceConfigurationConstants {
 
-	/**
-	 * Should the exec'ed command restarted if it dies: : default false
-	 */
-	public static final String CONFIG_RESTART = "restart";
-	public static final boolean DEFAULT_RESTART = false;
+  /**
+   * Should the exec'ed command restarted if it dies: : default false
+   */
+  public static final String CONFIG_RESTART = "restart";
+  public static final boolean DEFAULT_RESTART = false;
 
-	/**
-	 * Amount of time to wait before attempting a restart: : default 10000 ms
-	 */
-	public static final String CONFIG_RESTART_THROTTLE = "restartThrottle";
-	public static final long DEFAULT_RESTART_THROTTLE = 10000L;
+  /**
+   * Amount of time to wait before attempting a restart: : default 10000 ms
+   */
+  public static final String CONFIG_RESTART_THROTTLE = "restartThrottle";
+  public static final long DEFAULT_RESTART_THROTTLE = 10000L;
 
-	/**
-	 * Should stderr from the command be logged: default false
-	 */
-	public static final String CONFIG_LOG_STDERR = "logStdErr";
-	public static final boolean DEFAULT_LOG_STDERR = false;
+  /**
+   * Should stderr from the command be logged: default false
+   */
+  public static final String CONFIG_LOG_STDERR = "logStdErr";
+  public static final boolean DEFAULT_LOG_STDERR = false;
 
-	/**
-	 * Number of lines to read at a time
-	 */
-	public static final String CONFIG_BATCH_SIZE = "batchSize";
-	public static final int DEFAULT_BATCH_SIZE = 20;
+  /**
+   * Number of lines to read at a time
+   */
+  public static final String CONFIG_BATCH_SIZE = "batchSize";
+  public static final int DEFAULT_BATCH_SIZE = 20;
 
-	/**
-	 * Charset for reading input
-	 */
-	public static final String CHARSET = "charset";
-	public static final String DEFAULT_CHARSET = "UTF-8";
+  /**
+   * Charset for reading input
+   */
+  public static final String CHARSET = "charset";
+  public static final String DEFAULT_CHARSET = "UTF-8";
 }
