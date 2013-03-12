@@ -135,27 +135,27 @@ public class ApacheLogAvroEventSerializer extends AbstractAvroEventSerializer<Ap
     @Getter
     public static class ApacheEvent {
         private Map<String, String> headers;
-        private String original;
-        private String ip;
-        private String identd;
-        private String user;
-        private String time;
-        private String method;
-        private String uri;
-        private String protocol;
+        private String original = "";
+        private String ip = "";
+        private String identd = "";
+        private String user = "";
+        private String time = "";
+        private String method = "";
+        private String uri = "";
+        private String protocol = "";
         private int statuscode;
-        private String bytesSend;
-        private String referer;
-        private String useragent;
-        private String servername;
-        private String extraservername;
-        private String timeSecond;
-        private String timeMicro;
-        private String connectionstatus;
-        private String connectiontype;
-        private String sessioncookie;
-        private String bytesIn;
-        private String bytesOut;
+        private String bytesSend = "";
+        private String referer = "";
+        private String useragent = "";
+        private String servername = "";
+        private String extraservername = "";
+        private String timeSecond = "";
+        private String timeMicro = "";
+        private String connectionstatus = "";
+        private String connectiontype = "";
+        private String sessioncookie = "";
+        private String bytesIn = "";
+        private String bytesOut = "";
 
         @Override
         public String toString() {
