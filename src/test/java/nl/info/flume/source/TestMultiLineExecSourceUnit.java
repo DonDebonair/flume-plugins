@@ -71,38 +71,26 @@ public class TestMultiLineExecSourceUnit {
 	public void testRunMultiLineExecSource() {
 		List<String> eventLines1;
 
-		eventLines1 = Arrays.asList("[#|a2013-01-18T15:53:41.685+0100|INFO|sun-appserver2.1|javax.enterprise.system.container.web|_ThreadID=206;_ThreadName=RMI TCP Connection(23924)-127.0.0.1;Sun GlassFish Enterprise Server v2.1.1;8080;|WEB0713: Stopping Sun GlassFish Enterprise Server v2.1.1 HTTP/1.1 on 8080|#]", "");
-		eventLines.add(eventLines1);
-		eventLines1 = Arrays.asList(
-				  "[#|b2013-01-18T15:51:18.888+0100|WARNING|sun-appserver2.1|javax.enterprise.system.stream.err|_ThreadID=24;_ThreadName=httpWorkerThread-4848-2;_RequestID=dcd03b9d-c158-4118-97ed-2d5102b1cc64;|server.PerInterface.invoke(PerInterface.java:120)",
-				  "\tat com.sun.jmx.mbeanserver.MBeanSupport.invoke(MBeanSupport.java:262)",
-				  "\tat com.sun.jmx.interceptor.DefaultMBeanServerInterceptor.invoke(DefaultMBeanServerInterceptor.java:836)",
-				  "\tat com.sun.jmx.mbeanserver.JmxMBeanServer.invoke(JmxMBeanServer.java:761)",
-				  "\tat javax.management.remote.rmi.RMIConnectionImpl.doOperation(RMIConnectionImpl.java:1427)",
-				  "\tat javax.management.remote.rmi.RMIConnectionImpl.access$200(RMIConnectionImpl.java:72)",
-				  "\tat javax.management.remote.rmi.RMIConnectionImpl$PrivilegedOperation.run(RMIConnectionImpl.java:1265)",
-				  "\tat javax.management.remote.rmi.RMIConnectionImpl.doPrivilegedOperation(RMIConnectionImpl.java:1360)",
-				  "\tat javax.management.remote.rmi.RMIConnectionImpl.invoke(RMIConnectionImpl.java:788)",
-				  "\tat sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)",
-				  "\tat sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:39)",
-				  "\tat sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:25)",
-				  "\tat java.lang.reflect.Method.invoke(Method.java:597)",
-				  "\tat sun.rmi.server.UnicastServerRef.dispatch(UnicastServerRef.java:303)",
-				  "\tat sun.rmi.transport.Transport$1.run(Transport.java:159)",
-				  "\tat java.security.AccessController.doPrivileged(Native Method)",
-				  "\tat sun.rmi.transport.Transport.serviceCall(Transport.java:155)",
-				  "\tat sun.rmi.transport.tcp.TCPTransport.handleMessages(TCPTransport.java:535)",
-				  "\tat sun.rmi.transport.tcp.TCPTransport$ConnectionHandler.run0(TCPTransport.java:790)",
-				  "\tat sun.rmi.transport.tcp.TCPTransport$ConnectionHandler.run(TCPTransport.java:649)",
-				  "\tat java.util.concurrent.ThreadPoolExecutor$Worker.runTask(ThreadPoolExecutor.java:886)",
-				  "\tat java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:908)",
-				  "\tat java.lang.Thread.run(Thread.java:662)",
-				  "|#]",
-				  "");
-		eventLines.add(eventLines1);
-		eventLines1 = Arrays.asList("[#|c2013-01-18T15:53:41.685+0100|INFO|sun-appserver2.1|javax.enterprise.system.container.web|_ThreadID=206;_ThreadName=RMI TCP Connection(23924)-127.0.0.1;Sun GlassFish Enterprise Server v2.1.1;8080;|WEB0713: Stopping Sun GlassFish Enterprise Server v2.1.1 HTTP/1.1 on 8080|#]", "");
-		eventLines.add(eventLines1);
-		eventLines1 = Arrays.asList("[#|d2013-01-18T15:53:42.113+0100|INFO|sun-appserver2.1|javax.enterprise.system.container.web|_ThreadID=206;_ThreadName=RMI TCP Connection(23924)-127.0.0.1;Sun GlassFish Enterprise Server v2.1.1;8181;|WEB0713: Stopping Sun GlassFish Enterprise Server v2.1.1 HTTP/1.1 on 8181|#]", "");
+		eventLines1 = Arrays.asList("[#|2013-03-19T13:00:00.413+0100|INFO|oracle-glassfish3.1.2|nl.info.bva.model.service.impl.schedule.AbstractContextAwareQuartzJobBean|_ThreadID=36;_ThreadName=Thread-2;|Job 'ClangUserExportJob' started|#]", "");
+        eventLines.add(eventLines1);
+        eventLines1 = Arrays.asList("[#|2013-03-19T13:00:00.424+0100|WARNING|oracle-glassfish3.1.2|nl.info.bva.model.service.impl.schedule.AbstractContextAwareQuartzJobBean|_ThreadID=36;_ThreadName=Thread-2;|Job 'ClangUserExportJob' finished with JobExecutionException: [CLANG] Clang token 'null' is not valid...|#]", "");
+        eventLines.add(eventLines1);
+        eventLines1 = Arrays.asList(
+                "[#|2013-03-19T13:00:00.425+0100|INFO|oracle-glassfish3.1.2|org.quartz.core.JobRunShell|_ThreadID=36;_ThreadName=Thread-2;|Job site.clangUserExportJob threw a JobExecutionException:",
+                        "org.quartz.JobExecutionException: org.quartz.JobExecutionException: [CLANG] Clang token 'null' is not valid... [See nested exception: org.quartz.JobExecutionException: [CLANG] Clang token 'null' is not valid...]",
+                        "\tat nl.info.bva.model.service.impl.schedule.AbstractContextAwareQuartzJobBean.executeInternal(AbstractContextAwareQuartzJobBean.java:44)",
+                        "\tat org.springframework.scheduling.quartz.QuartzJobBean.execute(QuartzJobBean.java:113)",
+                        "\tat org.quartz.core.JobRunShell.run(JobRunShell.java:213)",
+                        "\tat java.util.concurrent.ThreadPoolExecutor$Worker.runTask(ThreadPoolExecutor.java:895)",
+                        "\tat java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:918)",
+                        "\tat java.lang.Thread.run(Thread.java:662)",
+                        "Caused by: org.quartz.JobExecutionException: [CLANG] Clang token 'null' is not valid...",
+                        "\tat nl.info.bva.clang.job.ClangUserExportJob.executeJobUsingService(ClangUserExportJob.java:26)",
+                        "\tat nl.info.bva.clang.job.ClangUserExportJob.executeJobUsingService(ClangUserExportJob.java:13)",
+                        "\tat nl.info.bva.model.service.impl.schedule.AbstractContextAwareQuartzJobBean.executeInternal(AbstractContextAwareQuartzJobBean.java:39)",
+                        "\t... 5 more",
+                        "|#]"
+        );
 		eventLines.add(eventLines1);
 
 		for (List<String> event : eventLines) {
