@@ -104,7 +104,7 @@ public class ApacheLogAvroEventSerializer extends AbstractAvroEventSerializer<Ap
             apacheEvent.setBytesIn(m.group(19));
             apacheEvent.setBytesOut(m.group(20));
         } else {
-            log.warn("The event doesn't match the Apache LogFormat!");
+            log.warn("The event doesn't match the Apache LogFormat! [{}]", logline);
         }
 
         // log.debug("Serialized event as: {}", apacheEvent);
