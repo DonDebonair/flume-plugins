@@ -89,7 +89,7 @@ public class TestMultiLineExecSourceUnit {
                         "\tat nl.info.bva.clang.job.ClangUserExportJob.executeJobUsingService(ClangUserExportJob.java:13)",
                         "\tat nl.info.bva.model.service.impl.schedule.AbstractContextAwareQuartzJobBean.executeInternal(AbstractContextAwareQuartzJobBean.java:39)",
                         "\t... 5 more",
-                        "|#]"
+                        "|#]", ""
         );
 		eventLines.add(eventLines1);
 
