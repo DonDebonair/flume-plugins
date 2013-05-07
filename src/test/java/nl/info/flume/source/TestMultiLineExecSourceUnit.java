@@ -5,6 +5,7 @@ import org.apache.flume.CounterGroup;
 import org.apache.flume.Event;
 import org.apache.flume.channel.ChannelProcessor;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -46,7 +47,7 @@ public class TestMultiLineExecSourceUnit {
 
 	@Spy
 	@InjectMocks
-	private MultiLineExecSource.ExecRunnable execRunnable = new MultiLineExecSource.ExecRunnable(command[0], "|#]", channelProcessor, counterGroup, false, 0L, false, 1000, Charset.defaultCharset());
+	private MultiLineExecSource.ExecRunnable execRunnable = new MultiLineExecSource.ExecRunnable(command[0], "|#]", " § ", channelProcessor, counterGroup, false, 0L, false, 1000, Charset.defaultCharset());
 
 	private List<List<String>> eventLines = new ArrayList<List<String>>();
 	private List<String> lines = new ArrayList<String>();
@@ -110,11 +111,11 @@ public class TestMultiLineExecSourceUnit {
 
 		int counter = 0;
 		for (List<String> event : eventLines) {
-			String expectedLinesJoined = StringUtils.join(event.subList(0, event.size() - 1).toArray(), "\n");
+			String expectedLinesJoined = StringUtils.join(event.subList(0, event.size() - 1).toArray(), " § ");
 
 			byte[] value = ((Event) values.get(counter++)).getBody();
 			assertEquals(expectedLinesJoined, new String(value));
-			assertEquals(expectedLinesJoined.length(), value.length);
+			assertEquals(expectedLinesJoined.length(), new String(value).length());
 		}
 	}
 

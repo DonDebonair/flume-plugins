@@ -55,108 +55,20 @@ import static nl.info.flume.source.MultiLineExecSourceConfigurationConstants.DEF
 import static nl.info.flume.source.MultiLineExecSourceConfigurationConstants.DEFAULT_LOG_STDERR;
 import static nl.info.flume.source.MultiLineExecSourceConfigurationConstants.DEFAULT_RESTART;
 import static nl.info.flume.source.MultiLineExecSourceConfigurationConstants.DEFAULT_RESTART_THROTTLE;
+import static nl.info.flume.source.MultiLineExecSourceConfigurationConstants.DEFAULT_LINE_TERMINATOR;
 
 /**
  * <p>
- * A {@link org.apache.flume.Source} implementation that executes a Unix process and turns each
- * line of text into an event.
- * </p>
- * <p>
- * This source runs a given Unix command on start up and expects that process to
- * continuously produce data on standard out (stderr ignored by default). Unless
- * told to restart, if the process exits for any reason, the source also exits and
- * will produce no further data. This means configurations such as <tt>cat [named pipe]</tt>
- * or <tt>tail -F [file]</tt> are going to produce the desired results where as
- * <tt>date</tt> will probably not - the former two commands produce streams of
- * data where as the latter produces a single event and exits.
- * </p>
- * <p>
- * The <tt>ExecSource</tt> is meant for situations where one must integrate with
- * existing systems without modifying code. It is a compatibility gateway built
- * to allow simple, stop-gap integration and doesn't necessarily offer all of
- * the benefits or guarantees of native integration with Flume. If one has the
- * option of using the <tt>AvroSource</tt>, for instance, that would be greatly
- * preferred to this source as it (and similarly implemented sources) can
- * maintain the transactional guarantees that exec can not.
- * </p>
- * <p>
- * <i>Why doesn't <tt>ExecSource</tt> offer transactional guarantees?</i>
- * </p>
- * <p>
- * The problem with <tt>ExecSource</tt> and other asynchronous sources is that
- * the source can not guarantee that if there is a failure to put the event into
- * the {@link org.apache.flume.Channel} the client knows about it. As a for instance, one of the
- * most commonly requested features is the <tt>tail -F [file]</tt>-like use case
- * where an application writes to a log file on disk and Flume tails the file,
- * sending each line as an event. While this is possible, there's an obvious
- * problem; what happens if the channel fills up and Flume can't send an event?
- * Flume has no way of indicating to the application writing the log file that
- * it needs to retain the log or that the event hasn't been sent, for some
- * reason. If this doesn't make sense, you need only know this: <b>Your
- * application can never guarantee data has been received when using a
- * unidirectional asynchronous interface such as ExecSource!</b> As an extension
- * of this warning - and to be completely clear - there is absolutely zero
- * guarantee of event delivery when using this source. You have been warned.
- * </p>
- * <p>
- * <b>Configuration options</b>
- * </p>
- * <table>
- * <tr>
- * <th>Parameter</th>
- * <th>Description</th>
- * <th>Unit / Type</th>
- * <th>Default</th>
- * </tr>
- * <tr>
- * <td><tt>command</tt></td>
- * <td>The command to execute</td>
- * <td>String</td>
- * <td>none (required)</td>
- * </tr>
- * <tr>
- * <td><tt>line.terminator</tt></td>
- * <td>The String that designates the end of the event</td>
- * <td>String</td>
- * <td>none (required)</td>
- * </tr>
- * <tr>
- * <td><tt>restart</tt></td>
- * <td>Whether to restart the command when it exits</td>
- * <td>Boolean</td>
- * <td>false</td>
- * </tr>
- * <tr>
- * <td><tt>restartThrottle</tt></td>
- * <td>How long in milliseconds to wait before restarting the command</td>
- * <td>Long</td>
- * <td>10000</td>
- * </tr>
- * <tr>
- * <td><tt>logStderr</tt></td>
- * <td>Whether to log or discard the standard error stream of the command</td>
- * <td>Boolean</td>
- * <td>false</td>
- * </tr>
- * <tr>
- * <td><tt>batchSize</tt></td>
- * <td>The number of events to commit to channel at a time.</td>
- * <td>integer</td>
- * <td>20</td>
- * </tr>
- * </table>
- * <p>
- * <b>Metrics</b>
- * </p>
- * <p>
- * TODO
- * </p>
+ * An implementation that executes a Unix process and turns each
+ * group of lines of text, terminated by a certain line-terminator into an event.
+ * It will
  */
 public class MultiLineExecSource extends AbstractSource implements EventDrivenSource, Configurable {
 
 	private static final Logger logger = LoggerFactory.getLogger(nl.info.flume.source.MultiLineExecSource.class);
 
 	private String command;
+    private String eventTerminator;
 	private String lineTerminator;
 	private CounterGroup counterGroup;
 	private ExecutorService executor;
@@ -170,12 +82,12 @@ public class MultiLineExecSource extends AbstractSource implements EventDrivenSo
 
 	@Override
 	public void start() {
-		logger.info("Multi Line Exec source starting with command: {}, line terminator: {}", command, lineTerminator);
+		logger.info("Multi Line Exec source starting with command: {}, event terminator: {}", command, eventTerminator);
 
 		executor = Executors.newSingleThreadExecutor();
 		counterGroup = new CounterGroup();
 
-		runner = new ExecRunnable(command, lineTerminator, getChannelProcessor(), counterGroup,
+		runner = new ExecRunnable(command, eventTerminator, lineTerminator, getChannelProcessor(), counterGroup,
 				  restart, restartThrottle, logStderr, bufferCount, charset);
 
 		// FIXME: Use a callback-like executor / future to signal us upon failure.
@@ -193,7 +105,7 @@ public class MultiLineExecSource extends AbstractSource implements EventDrivenSo
 
 	@Override
 	public void stop() {
-		logger.info("Stopping Multi Line exec source with command: {}, line terminator: {}", command, lineTerminator);
+		logger.info("Stopping Multi Line exec source with command: {}, event terminator: {}", command, eventTerminator);
 
 		if (runner != null) {
 			runner.setRestart(false);
@@ -219,13 +131,14 @@ public class MultiLineExecSource extends AbstractSource implements EventDrivenSo
 
 		super.stop();
 
-		logger.debug(format("Multi Line Exec source with command: %s, line terminator: %s stopped. Metrics: %s", command, lineTerminator, counterGroup));
+		logger.debug(format("Multi Line Exec source with command: %s, event terminator: %s stopped. Metrics: %s", command, eventTerminator, counterGroup));
 	}
 
 	@Override
 	public void configure(Context context) {
 		command = context.getString("command");
-		lineTerminator = context.getString("line.terminator");
+		eventTerminator = context.getString("event.terminator");
+        lineTerminator = context.getString("line.terminator", DEFAULT_LINE_TERMINATOR);
 
 		Preconditions.checkState(command != null, "The parameter command must be specified");
 		Preconditions.checkState(lineTerminator != null, "The parameter line.terminator must be specified");
@@ -239,8 +152,9 @@ public class MultiLineExecSource extends AbstractSource implements EventDrivenSo
 
 	protected static class ExecRunnable implements Runnable {
 
-		public ExecRunnable(String command, String lineTerminator, ChannelProcessor channelProcessor, CounterGroup counterGroup, boolean restart, long restartThrottle, boolean logStderr, int bufferCount, Charset charset) {
+		public ExecRunnable(String command, String eventTerminator, String lineTerminator, ChannelProcessor channelProcessor, CounterGroup counterGroup, boolean restart, long restartThrottle, boolean logStderr, int bufferCount, Charset charset) {
 			this.command = command;
+            this.eventTerminator = eventTerminator;
 			this.lineTerminator = lineTerminator;
 			this.channelProcessor = channelProcessor;
 			this.counterGroup = counterGroup;
@@ -252,6 +166,7 @@ public class MultiLineExecSource extends AbstractSource implements EventDrivenSo
 		}
 
 		private String command;
+        private String eventTerminator;
 		private String lineTerminator;
 		private ChannelProcessor channelProcessor;
 		private CounterGroup counterGroup;
@@ -289,9 +204,9 @@ public class MultiLineExecSource extends AbstractSource implements EventDrivenSo
 
 						buffer.add(line);
 
-						if (line.endsWith(lineTerminator)) {
+						if (line.endsWith(eventTerminator)) {
 							counterGroup.incrementAndGet("multi.line.exec.events.read");
-							String eventBody = StringUtils.join(buffer.toArray(), "\n");
+							String eventBody = StringUtils.join(buffer.toArray(), lineTerminator);
 							buffer.clear();
 							eventList.add(EventBuilder.withBody(eventBody.getBytes(charset)));
 							skipNextEmptyLine = true;
