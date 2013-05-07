@@ -71,14 +71,12 @@ public class TestMultiLineExecSource {
 		Channel channel = new MemoryChannel();
 		Context context = new Context();
 
-		URL resource = TestMultiLineExecSource.class.getClassLoader().getResource("server.log");
+		String resource = "src/test/resources/server.log";
 		assertNotNull(resource);
 
-
-		String s = resource.getPath();
 		int expectedNrOfEvents = 0;
 
-		BufferedReader br = new BufferedReader(new FileReader(s));
+		BufferedReader br = new BufferedReader(new FileReader(resource));
 		String line;
 		while ((line = br.readLine()) != null) {
 			if (line.endsWith("|#]")) {
@@ -86,7 +84,7 @@ public class TestMultiLineExecSource {
 			}
 		}
 
-		context.put("command", format("cat %s", s));
+		context.put("command", format("cat %s", resource));
 		context.put("event.terminator", "|#]");
 		context.put("keep-alive", "1");
 		context.put("capacity", "100000");
@@ -123,7 +121,7 @@ public class TestMultiLineExecSource {
 		source.stop();
 
 		File actualFile = new File("/tmp/flume-execsource." + Thread.currentThread().getId());
-		File expectedFile = new File(s);
+		File expectedFile = new File(resource);
 
 		assertEquals(expectedNrOfEvents, actualNrOfEvents);
 

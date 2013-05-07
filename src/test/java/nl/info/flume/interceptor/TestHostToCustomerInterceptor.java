@@ -21,6 +21,6 @@ public class TestHostToCustomerInterceptor {
         Map<String, String> testMap = HostToCustomerInterceptor.buildCustomerToHostMapFromFile(file);
         Assert.assertEquals("'logmft02p' should belong to customer 'nietinfo'", "nietinfo", testMap.get("logmft02p"));
         Assert.assertEquals("'localhost' should belong to customer 'info'", "info", testMap.get("localhost"));
-        Assert.assertEquals("'blie' should belong to customer 'nietinfo'", "nietinfo", testMap.get("blie"));
+        Assert.assertEquals("'blah' should belong to customer 'nietinfo'", "nietinfo", testMap.get("blah"));
     }
 }
