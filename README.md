@@ -4,6 +4,7 @@ These are a bunch of extensions to Flume that I developed at Info.nl with the he
 Below you can find installation instructions and a short overview of the different components.
 
 **NOTE: These plugins are built for Flume-NG and will not work on Flume-OG**
+
 **NOTE 2: These plugins lack comprehensive test coverage. Some unit tests are available for some of the plugins, but assume buggyness :) Of course contributions are welcome to make these plugins more stable and useful**
 
 ## Compilation & Installation instructions
