@@ -1,4 +1,4 @@
-# Info Flume Plugins [![Build Status](https://travis-ci.org/DandyDev/flume-plugins.png?branch=master)](https://travis-ci.org/DandyDev/flume-plugins)
+# Info Flume Plugins [![Build Status](https://travis-ci.org/DandyDev/flume-plugins.png?branch=master)](https://travis-ci.org/DandyDev/flume-plugins) [![Coverage Status](https://coveralls.io/repos/DandyDev/flume-plugins/badge.png?branch=master)](https://coveralls.io/r/DandyDev/flume-plugins?branch=master)
 
 These are a bunch of extensions to Flume that I developed at Info.nl with the help of [Remmelt Pit](https://github.com/remmelt). These plugins are mainly used at Info.nl to help with the collection and storage of logs from all the different applications that are developed at Info.nl. Currently we process Java application logs, Apache httpd logs and Syslogs.
 Below you can find installation instructions and a short overview of the different components.
